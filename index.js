@@ -5,6 +5,7 @@ const app = express()
 const db = require('./config/mongoose')
 const Student = require('./models/student')
 const PORT = 8000
+const jwt = require('jsonwebtoken')
 
 
 app.use(cookieParser())
@@ -24,6 +25,36 @@ const authenticate = async (req, res, next) => {
     if(student) {
         next()
     } else {
+
+        return res.status(401).json({
+            message: "Unauthorized!",
+        })
+
+    }
+
+    // test what if else not used!
+
+}
+
+const authenticateJWT = async (req, res, next) => {
+
+    console.log(req.cookies.user)
+    const studentID = jwt.verify(req.cookies.user, 'test')
+
+    if(studentID) {
+
+        const student = await Student.findById(studentID)
+        if(student) {
+        next()
+        
+        } else {
+                return res.status(401).json({
+                    message: "Unauthorized!",
+                })
+        }
+
+    }
+     else {
 
         return res.status(401).json({
             message: "Unauthorized!",
@@ -74,6 +105,26 @@ app.post('/auth', async (req, res) => {
 
 })
 
+app.post('/jwt', async (req, res) => {
+
+    const student = await Student.findOne({email: req.body.email, password: req.body.password})
+
+    if(student) {
+        const token = jwt.sign(student.id, 'test')
+        res.cookie('user', token)
+        return res.status(200).json({
+            message: "Student loggedin successfully!",
+            student,
+            // token
+        })
+    }
+
+    return res.status(401).json({
+        message: "Unauthorized!",
+    })
+
+})
+
 app.post('/student', async (req, res) => {
 
     try {
@@ -96,7 +147,7 @@ app.post('/student', async (req, res) => {
 
 })
 
-app.get('/student', authenticate, async (req, res) => {
+app.get('/student', authenticateJWT, async (req, res) => {
 
     console.log(req.body)
     const students = await Student.find({})

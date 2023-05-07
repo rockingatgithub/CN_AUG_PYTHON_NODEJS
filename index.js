@@ -1,13 +1,20 @@
 const express = require('express')
 const path = require('path')
 const cookieParser = require('cookie-parser')
+const cors = require('cors')
 const app = express()
 const db = require('./config/mongoose')
 const Student = require('./models/student')
 const PORT = 8000
 const jwt = require('jsonwebtoken')
 
+var corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  }
+  
 
+app.use(cors(corsOptions))
 app.use(cookieParser())
 
 let counter = 0;

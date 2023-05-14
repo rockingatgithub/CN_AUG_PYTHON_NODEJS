@@ -7,6 +7,9 @@ const db = require('./config/mongoose')
 const Student = require('./models/student')
 const PORT = 8000
 const jwt = require('jsonwebtoken')
+const {OAuth2Client} = require('google-auth-library');
+var generator = require('generate-password');
+
 
 var corsOptions = {
     origin: 'http://localhost:3000',
@@ -78,22 +81,6 @@ app.use(requestCounter)
 app.use(express.urlencoded())
 app.use(express.json())
 
-
-const student = [
-    {
-        name: 'abc',
-        roll: 40
-    },
-    {
-        name: 'abcd',
-        roll: 41
-    },
-    {
-        name: 'abcde',
-        roll: 42
-    }
-]
-
 app.post('/auth', async (req, res) => {
 
     const student = await Student.findOne({email: req.body.email, password: req.body.password})
@@ -118,11 +105,11 @@ app.post('/jwt', async (req, res) => {
 
     if(student) {
         const token = jwt.sign(student.id, 'test')
-        res.cookie('user', token)
+        // res.cookie('user', token)
         return res.status(200).json({
             message: "Student loggedin successfully!",
             student,
-            // token
+            token
         })
     }
 
@@ -197,42 +184,41 @@ app.delete('/student', async (req, res) => {
 
 })
 
+app.post('/google', async (req, res) => {
 
+    console.log(req.headers['Sec-Ch-Ua-Platform'])
 
+    const token = req.body.token
 
+    const client = new OAuth2Client('877608648724-rjcmq7oemsqjbu3r8k9rqo1i7jsu9h8b.apps.googleusercontent.com')
+    const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: '877608648724-rjcmq7oemsqjbu3r8k9rqo1i7jsu9h8b.apps.googleusercontent.com',  // Specify the CLIENT_ID of the app that accesses the backend
+        // Or, if multiple clients access the backend:
+        //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+    });
+    const payload = ticket.getPayload();
 
+    const {email, name, sub} = payload
+    const password = generator.generate({
+        length: 8
+    })
 
+    
+    let student = await Student.findOne({email: email})
 
+    // create student if it isn't in the DB
+    if(!student)
+    {
+        student = await Student.create({email, name, roll: parseInt(sub), password })
+    }
 
+    return res.status(200).json({
+        message: "Google OAuth successful",
+        student: student
+    })
 
-
-
-app.get('/home', (req, res) => {
-    return res.end('<h1>The home page</h1>')
 })
-
-app.get('/about', (req, res) => {
-    return res.end('<h1>The about page</h1>')
-})
-
-app.get('/login', (req, res) => {
-    return res.sendFile(path.join(__dirname, 'index.html'))
-})
-
-app.post('/login', (req, res) => {
-
-    console.log(req.body)
-
-    return res.end('The data is received')
-
-})
-
-app.delete('/data', (req, res) => {
-
-
-
-})
-
 
 app.listen(PORT, () => {
     console.log("Express is running!")

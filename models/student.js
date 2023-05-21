@@ -6,11 +6,6 @@ const StudentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    roll: {
-        type: Number,
-        required: true,
-        unique: true
-    },
     email: {
         type: String,
         required: true,
@@ -19,8 +14,17 @@ const StudentSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true,
-    }
+    },
 
+    interviews: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Interview'
+    }],
+
+    results: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Result'
+    }]
 
 })
 

@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const {OAuth2Client} = require('google-auth-library');
 var generator = require('generate-password');
 
-router.post('/auth', async (req, res) => {
+router.post('/', async (req, res) => {
 
     const student = await Student.findOne({email: req.body.email, password: req.body.password})
 
@@ -28,7 +28,7 @@ router.post('/jwt', async (req, res) => {
     const student = await Student.findOne({email: req.body.email, password: req.body.password})
 
     if(student) {
-        const token = jwt.sign(student.id, 'test')
+        const token = jwt.sign(student.id, process.env.JWT_KEY)
         // res.cookie('user', token)
         return res.status(200).json({
             message: "Student loggedin successfully!",
@@ -45,14 +45,12 @@ router.post('/jwt', async (req, res) => {
 
 router.post('/google', async (req, res) => {
 
-    console.log(req.headers['Sec-Ch-Ua-Platform'])
-
     const token = req.body.token
 
-    const client = new OAuth2Client('877608648724-rjcmq7oemsqjbu3r8k9rqo1i7jsu9h8b.apps.googleusercontent.com')
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
     const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: '877608648724-rjcmq7oemsqjbu3r8k9rqo1i7jsu9h8b.apps.googleusercontent.com',  // Specify the CLIENT_ID of the app that accesses the backend
+        audience: process.env.GOOGLE_CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
         // Or, if multiple clients access the backend:
         //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
     });
@@ -63,6 +61,8 @@ router.post('/google', async (req, res) => {
         length: 8
     })
 
+    console.log(payload)
+
     
     let student = await Student.findOne({email: email})
 
@@ -72,9 +72,12 @@ router.post('/google', async (req, res) => {
         student = await Student.create({email, name, roll: parseInt(sub), password })
     }
 
+    const jwtToken = jwt.sign(student.id, process.env.JWT_KEY)
+
     return res.status(200).json({
         message: "Google OAuth successful",
-        student: student
+        student: student,
+        token: jwtToken
     })
 
 })

@@ -3,14 +3,15 @@ const jwt = require('jsonwebtoken')
 
 exports.authenticateJWT = async (req, res, next) => {
 
-    console.log(req.cookies.user)
-    const studentID = jwt.verify(req.cookies.user, 'test')
+    console.log( req.body.user)
+    const studentID = jwt.verify(req.body.user, process.env.JWT_KEY)
 
     if(studentID) {
 
         const student = await Student.findById(studentID)
         if(student) {
-        next()
+            req.user = student
+            next()
         
         } else {
                 return res.status(401).json({

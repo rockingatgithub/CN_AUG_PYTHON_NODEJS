@@ -24,6 +24,11 @@ const resultSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: [ 'PASS', 'FAIL', 'PENDING' ]
+    },
+
+    evaluatedBy: {
+        type: mongoose.Types.ObjectId,
+        ref: ''
     }
 
 })

@@ -1,6 +1,11 @@
 const express = require('express')
+const fs = require('fs')
+const path = require('path')
+const jwt = require('jsonwebtoken')
+const { sendMail } = require('../../../../mailers/google')
 const { authenticateJWT, authenticate } = require('../../../../middlewares/auth_middlewares')
 const Student = require('../../../../models/student')
+const passport = require('passport')
 const router = express.Router()
 
 
@@ -9,10 +14,12 @@ router.post('/', async (req, res) => {
     try {
 
         const student = await Student.create(req.body)
+        const token = jwt.sign(student.id, process.env.JWT_KEY)
     
         return res.status(200).json({
             message: "Student added successfully!",
-            student: student
+            student: student,
+            token: token
         })
 
     }catch(error) {
@@ -38,13 +45,21 @@ router.get('/', authenticateJWT, async (req, res) => {
 
 })
 
-router.put('/:id', authenticate ,async (req, res) => {
+router.put('/', passport.authenticate('jwt', { failureRedirect: '/login', session: false })  , async (req, res) => {
+    const studentId = req.user.id
 
-    console.log(req.body)
-    console.log(req.params)
-    const studentId = req.params.id
+    console.log("passport user", req.user)
 
     const student = await Student.findByIdAndUpdate(studentId, req.body, { new: true })
+
+    console.log('path', path.join(__dirname, '../../../mailers/google/template.html'))
+
+    sendMail(
+        student.email, 
+        'Updated request received.',
+        `The name has been updated to ${student.name}`,
+        fs.readFileSync(path.join(__dirname, '../../../../mailers/google/template.html'))
+    )
 
     return res.status(200).json({
         message: "Student updated successfully!",

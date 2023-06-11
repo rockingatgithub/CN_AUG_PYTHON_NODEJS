@@ -1,5 +1,5 @@
 const express = require('express')
-const Student = require('../../../../models/student')
+const Admin = require('../../../../../models/admin')
 const router = express.Router()
 const jwt = require('jsonwebtoken')
 const { OAuth2Client } = require('google-auth-library');
@@ -8,13 +8,14 @@ var generator = require('generate-password');
 router.post('/', async (req, res) => {
 
     try {
-        const student = await Student.findOne({ email: req.body.email, password: req.body.password })
+        const admin = await Admin.findOne({ email: req.body.email, password: req.body.password })
 
-        if (student) {
-            res.cookie('user', student._id)
+        if (admin) {
+            res.cookie('user', admin._id)
             return res.status(200).json({
                 message: "Student loggedin successfully!",
-                student
+                user: admin,
+                isAdmin: true
             })
         }
 
@@ -33,15 +34,16 @@ router.post('/', async (req, res) => {
 
 router.post('/jwt', async (req, res) => {
 
-    const student = await Student.findOne({ email: req.body.email, password: req.body.password })
+    const admin = await Admin.findOne({ email: req.body.email, password: req.body.password })
 
-    if (student) {
-        const token = jwt.sign(student.id, process.env.JWT_KEY)
+    if (admin) {
+        const token = jwt.sign(admin.id, process.env.JWT_KEY)
         // res.cookie('user', token)
         return res.status(200).json({
-            message: "Student loggedin successfully!",
-            student,
-            token
+            message: "admin loggedin successfully!",
+            user: admin,
+            token,
+            isAdmin: true
         })
     }
 
@@ -72,19 +74,20 @@ router.post('/google', async (req, res) => {
     console.log(payload)
 
 
-    let student = await Student.findOne({ email: email })
+    let admin = await Admin.findOne({ email: email })
 
-    // create student if it isn't in the DB
-    if (!student) {
-        student = await Student.create({ email, name, roll: parseInt(sub), password })
+    // create admin if it isn't in the DB
+    if (!admin) {
+        admin = await Admin.create({ email, name, roll: parseInt(sub), password })
     }
 
-    const jwtToken = jwt.sign(student.id, process.env.JWT_KEY)
+    const jwtToken = jwt.sign(admin.id, process.env.JWT_KEY)
 
     return res.status(200).json({
         message: "Google OAuth successful",
-        student: student,
-        token: jwtToken
+        user: admin,
+        token: jwtToken,
+        isAdmin: true
     })
 
 })

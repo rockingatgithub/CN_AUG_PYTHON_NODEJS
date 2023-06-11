@@ -20,8 +20,6 @@ app.use(express.json())
 passport.initialize()
 app.use('/', require('./routes'))
 
-console.log(process.env)
-
 app.listen(PORT, () => {
     console.log("Express is running!")
 })

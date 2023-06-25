@@ -18,7 +18,7 @@ router.post('/', async (req, res) => {
     
         return res.status(200).json({
             message: "Student added successfully!",
-            user: student,
+            student,
             token: token
         })
 

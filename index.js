@@ -20,10 +20,7 @@ app.use(express.json())
 passport.initialize()
 app.use('/', require('./routes'))
 
-db.then(
-    () => {
-        app.listen(PORT, () => {
-            console.log("Express is running!")
-        })
-    }
-)
+
+app.listen(PORT, () => {
+    console.log("Express is running!")
+})
